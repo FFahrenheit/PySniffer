@@ -1,6 +1,6 @@
 from sniffer import Sniffer
 
-filename = 'ethernet_3.bin'
+filename = 'ethernet_2.bin'
 filename = 'tests/' + filename
 
 sniffer = Sniffer(filename)

@@ -1,5 +1,3 @@
-import os
-
 tipos = {
     ('08', '00') : 'IPv4',
     ('08', '06') : 'ARP',
@@ -9,7 +7,7 @@ tipos = {
 
 class Sniffer:
     def __init__(self, filename):
-        print('*'*100)
+        print(f"{'*'*20} ETHERNET ({ filename }) {'*'*20}")
         self.filename = filename
 
         try:
@@ -26,7 +24,7 @@ class Sniffer:
                     
                     byte = file.read(1)
                 
-                print('Contenido: ' + ' '.join(self.bytes))
+                print('Contenido: ' + ' '.join(self.bytes), end='\n\n')
         except Exception as e:
             self.bytes = None
             print('Error al leer el archivo')
@@ -42,10 +40,10 @@ class Sniffer:
         self.datos =  self.bytes[14:]
         self.protocolo = tipos[self.tipo]
 
-        print(f"Destino: {str(self.destino)}")
-        print(f"Origen: {str(self.origen)}")
-        print(f"Tipo: {''.join(self.tipo)} => {self.protocolo}")
-        print(f"Datos: {' '.join(self.datos)}")
+        print(f"Destino: {str(self.destino)}\n")
+        print(f"Origen: {str(self.origen)}\n")
+        print(f"Tipo: {''.join(self.tipo)} => {self.protocolo}\n")
+        print(f"Datos: {' '.join(self.datos)}\n")
 
         if self.protocolo == 'IPv4':
             
