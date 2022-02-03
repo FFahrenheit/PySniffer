@@ -1,13 +1,15 @@
+import os
 from sniffer import Sniffer
 
-filename = 'ethernet_ipv4_icmp_host_unreachable.bin'
-filename = 'tests/' + filename
+practica = 'ipv4'
 
-sniffer = Sniffer(filename)
-sniffer.handle()
+def main():
+    directory = 'tests'
+    for filename in os.listdir(directory):
+        if practica in filename:
+            f = os.path.join(directory, filename)
+            if os.path.isfile(f):
+                Sniffer(f).handle()
 
-# sniffer_2 = Sniffer('tests/ethernet_1.bin')
-# sniffer_2.handle()
-
-# sniffer_3 = Sniffer('tests/ethernet_3.bin')
-# sniffer_3.handle()
+if __name__ == '__main__':
+    main()

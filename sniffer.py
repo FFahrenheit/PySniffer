@@ -20,7 +20,7 @@ class Sniffer:
                     byte = file.read(1)
                 
                 print('Contenido: ' + ' '.join(self.bytes), end='\n')
-                print('Longitud: ' + str(len(self.bytes)), end='\n\n')
+                print(f"Longitud: {str(len(self.bytes))} bytes", end = '\n\n')
         except Exception as e:
             print(e)
             self.bytes = None
@@ -43,7 +43,7 @@ class Sniffer:
         print(f"Datos: {' '.join(self.datos)}\n")
 
         if self.protocolo == 'IPv4':        
-            print('*'*40 + 'IPv4' + '*'* 40)
+            print('*'*40 + ' IPv4 ' + '*'* 40)
             self.ipv4()
 
         elif self.protocolo == 'ARP':
@@ -82,36 +82,34 @@ class Sniffer:
         to_int = lambda x : str(int.from_bytes(x, byteorder='big'))
         self.ip_origen = list(map(to_int, datos[12:16]))
         self.ip_destino = list(map(to_int, datos[16:20]))
-        self.opciones = self.bytes[36:36 + self.longitud*4 - 20]
+        self.opciones = self.bytes[36:36 + self.longitud * 4 - 20]
 
         print(f"Version: {self.version}")
         print(f"Longitud del encabezado: {self.longitud} palabras ({self.longitud * 4} bytes)")
-        print(f"Prioridad: {prioridades[self.prioridad]} ({self.prioridad})")
+        print(f"Prioridad: {prioridades.get(self.prioridad, 'No encontrada')} ({self.prioridad})")
         print(f"Caracteristicas de servicio: {self.caracteristicas}")
-
         for index, c in enumerate(self.caracteristicas):
             if index == 0:
-                print(f"\tRetardo: {'Normal 'if c == '0' else 'Bajo'}")
+                print(f"\tRetardo: {'Normal' if c == '0' else 'Bajo'} ({c})")
             elif index == 1:
-                print(f"\tRendimiento: {'Normal 'if c == '0' else 'Alto'}")
+                print(f"\tRendimiento: {'Normal' if c == '0' else 'Alto'} ({c})")
             elif index == 2:
-                print(f"\tFiabilidad: {'Normal 'if c == '0' else 'Alta'}")
+                print(f"\tFiabilidad: {'Normal' if c == '0' else 'Alta'} ({c})")
 
-        print(f"Longitud total: {int.from_bytes(self.longitud_total, byteorder='big')}")
+        print(f"Longitud total: {int.from_bytes(self.longitud_total, byteorder='big')} bytes")
         print(f"Identificador: {int.from_bytes(self.identificador, byteorder='big')}")
-        
         print(f"Banderas: {self.flags}")
         for index, f in enumerate(self.flags):
             if index == 0:
                 print(f"\tReservado: {f}")
             if index == 1:
-                print(f"\tDF: {'Divisible' if f == '0' else 'No divisible'}")
+                print(f"\tDF: {'Divisible' if f == '0' else 'No divisible'} ({f})")
             elif index == 2:
-                print(f"\tMF: {'Ultimo fragmento' if f == '0' else 'Fragmento intermedio'}")
+                print(f"\tMF: {'Ultimo fragmento' if f == '0' else 'Fragmento intermedio'} ({f})")
         
         print(f"Posicion: {self.posicion}")
         print(f"Tiempo de vida: {self.ttl}")
-        print(f"Protocolo: {protocolos[self.protocolo]} ({self.protocolo})")
+        print(f"Protocolo: {protocolos.get(self.protocolo, 'No definido')} ({self.protocolo})")
         print(f"Checksum: {' '.join(self.checksum)}")
         print(f"IP origen: {'.'.join(self.ip_origen)}")
         print(f"IP destino: {'.'.join(self.ip_destino)}")
