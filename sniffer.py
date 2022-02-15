@@ -1,3 +1,4 @@
+from ipaddress import IPv4Address
 from recursos import *
 
 class Sniffer:
@@ -35,7 +36,7 @@ class Sniffer:
         self.origen =  ':'.join(self.bytes[6:12])
         self.tipo = tuple(self.bytes[12:14])
         self.datos =  self.bytes[14:]
-        self.protocolo = tipos[self.tipo]
+        self.protocolo = TIPOS[self.tipo]
 
         print(f"Destino: {str(self.destino)}\n")
         print(f"Origen: {str(self.origen)}\n")
@@ -86,7 +87,7 @@ class Sniffer:
 
         print(f"Version: {self.version}")
         print(f"Longitud del encabezado: {self.longitud} palabras ({self.longitud * 4} bytes)")
-        print(f"Prioridad: {prioridades.get(self.prioridad, 'No encontrada')} ({self.prioridad})")
+        print(f"Prioridad: {PRIORIDADES.get(self.prioridad, 'No encontrada')} ({self.prioridad})")
         print(f"Caracteristicas de servicio: {self.caracteristicas}")
         for index, c in enumerate(self.caracteristicas):
             if index == 0:
@@ -109,12 +110,27 @@ class Sniffer:
         
         print(f"Posicion: {self.posicion}")
         print(f"Tiempo de vida: {self.ttl}")
-        print(f"Protocolo: {protocolos.get(self.protocolo, 'No definido')} ({self.protocolo})")
+        
+        print(f"Protocolo: {PROTOCOLOS.get(self.protocolo, 'No definido')} ({self.protocolo})")
+        if self.protocolo == 1:
+            self.icmpv4(34 + len(self.opciones))
+        else:
+            pass
+
         print(f"Checksum: {' '.join(self.checksum)}")
         print(f"IP origen: {'.'.join(self.ip_origen)}")
         print(f"IP destino: {'.'.join(self.ip_destino)}")
         print(f"Opciones: {' '.join(self.opciones)}")
 
+
+    def icmpv4(self, idx_inicio):
+        self.icmpv4_tipo = self.bits_int(self.raw_bytes[idx_inicio], 0, 8)
+        self.icmpv4_codigo = self.bits_int(self.raw_bytes[idx_inicio + 1], 0, 8)
+        self.icmpv_checksum = self.bytes[idx_inicio + 2: idx_inicio + 4]
+
+        print(f"\tTipo: {ICMPV4_TIPOS.get(self.icmpv4_tipo, 'No especificado')} ({self.icmpv4_tipo})")
+        print(f"\tCodigo: {ICMPV4_CODIGOS.get(self.icmpv4_codigo, 'No especificado')} ({self.icmpv4_codigo})")
+        print(f"\tChecksum: {' '.join(self.icmpv_checksum)}")
 
     def bits_int(self, byte, inicio, fin, fill = 8):
         return int(self.bits(byte, inicio, fin, fill), base=2)
