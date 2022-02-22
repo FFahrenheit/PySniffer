@@ -36,7 +36,7 @@ class Sniffer:
         self.origen =  ':'.join(self.bytes[6:12])
         self.tipo = tuple(self.bytes[12:14])
         self.datos =  self.bytes[14:]
-        self.protocolo = self.get(TIPOS[self.tipo], 'Por definir')
+        self.protocolo = TIPOS.get(self.tipo, 'Por definir')
 
         print(f"Destino: {str(self.destino)}\n")
         print(f"Origen: {str(self.origen)}\n")
@@ -66,20 +66,24 @@ class Sniffer:
         datos = self.raw_bytes[14:]
         datos_hex = self.bytes[14:]
         print(f"Datos: {' '.join(datos_hex)}")
+        
         self.tipo_hardware_arp = int.from_bytes(datos[0] + datos[1], byteorder='big')
-        self.tipo_protocolo_arp = int.from_bytes(datos[2] + datos[3], byteorder='big')
+        self.tipo_protocolo_arp = tuple(datos_hex[2:4])
         x = int.from_bytes(datos[4], byteorder='big')
         y = int.from_bytes(datos[5], byteorder='big')
         self.codigo_operacion_arp = int.from_bytes(datos[6] + datos[7], byteorder='big')
         self.mac_emisor_arp = ':'.join(datos_hex[8 : 8+x])
-        self.ip_emisor_arp = '.'.join(datos_hex[8+x : 8+x+y])
         self.mac_receptor_arp = ':'.join(datos_hex[8+x+y : 8+2*x+y])
-        self.ip_receptor_arp = '.'.join(datos_hex[8+2*x+y : 8+2*(x+y)])
+        to_int = lambda x : str(int.from_bytes(x, byteorder='big'))
+        self.ip_emisor_arp = '.'.join(map(to_int, datos[8+x : 8+x+y]))
+        self.ip_receptor_arp = '.'.join(map(to_int, datos[8+2*x+y : 8+2*(x+y)]))
+
 
         print(f"Tipo de hardware: {ARP_HARDWARE.get(self.tipo_hardware_arp, 'Unassigned')} ({self.tipo_hardware_arp})")
-        print(f"Tipo de protocolo: {ARP_OPERACION.get(self.tipo_protocolo_arp, 'Unassigned')} ({self.tipo_protocolo_arp})")
+        print(f"Tipo de protocolo: {''.join(self.tipo_protocolo_arp)} => {TIPOS.get(self.tipo_protocolo_arp, 'No definido')}")
         print(f"Longitud direccion de hardware: {x} bytes")
         print(f"Longitud direccion de protocolo: {y} bytes")
+        print(f"Codigo de operación: {ARP_OPERACION.get(self.codigo_operacion_arp, 'Unassigned')} ({self.codigo_operacion_arp})")
         print(f"Direccion hardware del emisor: {self.mac_emisor_arp}")
         print(f"Direccion IP del emisor: {self.ip_emisor_arp}")
         print(f"Direccion hardware del receptor: {self.mac_receptor_arp}")

@@ -1,6 +1,3 @@
-from re import A
-
-
 TIPOS = {
     ('08', '00') : 'IPv4',
     ('08', '06') : 'ARP',
