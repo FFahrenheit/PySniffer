@@ -1,7 +1,7 @@
 import os
 from sniffer import Sniffer
 
-practica = 'ipv4_icmp'
+practica = 'arp'
 
 def main():
     directory = 'tests'
