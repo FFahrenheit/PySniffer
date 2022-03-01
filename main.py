@@ -1,7 +1,7 @@
 import os
 from sniffer import Sniffer
 
-practica = 'ipv6'
+practica = 'icmpv6'
 
 def main():
     directory = 'tests'

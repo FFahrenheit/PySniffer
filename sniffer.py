@@ -65,16 +65,18 @@ class Sniffer:
         datos_hex = self.bytes[14:14+40]
         print(f"Datos: {' '.join(datos_hex)}")
 
+        self.version = self.bits_int(datos[0], 0, 4)
         self.clase_trafico = self.bits(datos[0] + datos[1], 4, 12, 16)
-        clase_trafico_bytes = bytes([int(self.clase_trafico, 2)])
-        self.prioridad = self.bits(clase_trafico_bytes, 0, 3)
-        self.caracteristicas = self.bits(clase_trafico_bytes, 3, 8)
+        self.prioridad = self.clase_trafico[:3]
+        self.caracteristicas = self.clase_trafico[3:]
         self.etiqueta_flujo = self.bits_int(datos[1] + datos[2] + datos[3], 4, 24, 24)
-        #Tamaño: 4-5
-        #Siguiente: 6
-        #Alcance: 7
+        self.carga_util = int.from_bytes(datos[4] + datos[5], byteorder='big')
+        self.siguiente = int.from_bytes(datos[6], byteorder='big')
+        self.limite_saltos = int.from_bytes(datos[7], byteorder='big')        
         self.ip_origen = [i + j for i, j in zip(datos_hex[8:24:2], datos_hex[9:24:2])]
+        self.ip_destino = [i + j for i, j in zip(datos_hex[24:40:2], datos_hex[25:40:2])]
 
+        print(f"Versión: {self.version}")
         print(f"Clase de tráfico: {self.clase_trafico}")
         print(f"Prioridad: {PRIORIDADES.get(self.prioridad, 'No encontrada')} ({self.prioridad})")
         print(f"Caracteristicas de servicio: {self.caracteristicas}")
@@ -87,8 +89,33 @@ class Sniffer:
                 print(f"\tFiabilidad: {'Normal' if c == '0' else 'Alta'} ({c})")
 
         print(f"Etiqueta de flujo: {self.etiqueta_flujo}")
-        #
+        print(f"Carga útil: {self.carga_util} bytes")
+        print(f"Protocolo: {PROTOCOLOS.get(self.siguiente, 'No definido')} ({self.siguiente})")
+        print(f"Limite de saltos: {self.limite_saltos}")
         print(f"IP origen: {':'.join(self.ip_origen)}")
+        print(f"IP destino: {':'.join(self.ip_destino)}")
+
+        if self.siguiente == 58:
+            self.icmpv6()
+        else:
+            pass
+
+    def icmpv6(self):
+        datos = self.raw_bytes[54:58]
+        datos_hex = self.bytes[54:58]
+
+        self.icmpv6_tipo = int.from_bytes(datos[0], byteorder='big')
+        self.icmpv6_codigo = int.from_bytes(datos[1], byteorder='big')
+        self.icmpv6_checksum = datos_hex[2:4]
+
+        if self.icmpv6_tipo in ICMPV6_CODIGOS:
+            codigo = ICMPV6_CODIGOS[self.icmpv6_tipo].get(self.icmpv6_codigo, 'No especificado')
+        else:
+            codigo = 'No especificado'
+
+        print(f"Tipo: {ICMPV6_TIPOS.get(self.icmpv6_tipo, 'No especificado')} ({self.icmpv6_tipo})")
+        print(f"Codigo: { codigo } ({self.icmpv6_codigo})")
+        print(f"Checksum: {' '.join(self.icmpv6_checksum)}")
 
     def arp(self):
         datos = self.raw_bytes[14:]

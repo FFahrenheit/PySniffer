@@ -133,3 +133,35 @@ ARP_OPERACION = {
     # 266 - 65534 : Unassigned,
     65535 : 'Reserved',
 }
+
+ICMPV6_TIPOS = {
+    1: 'Mensaje de destino inalcanzable',
+    2: 'Mensaje de paquete demasiado grande',
+    3: 'Time exceeded message',
+    4: 'Mensaje de problema de parámetro',
+    128: 'Mensaje del pedido de eco',
+    129: 'Mensaje de respuesta de eco',
+    133: 'Mensaje de solicitud de router',
+    134: 'Mensaje de anuncio del router',
+    135: 'Mensaje de solicitud vecino',
+    136: 'Mensaje de anuncio de vecino',
+    137: 'Reoriente del mensaje'
+}
+
+ICMPV6_CODIGOS = {
+    1: {
+        0: 'No existe ruta de destino',
+        1: 'Comunicación con el destino administrativamente prohibida',
+        2: 'No asignado',
+        3: 'Direccion inalcanzable'
+    },
+    3: {
+        0: 'El limite del salto excedido',
+        1: 'Tiempo de reensamble del fragmento excedido'
+    },
+    4: {
+        0: 'El campo del encabezado erroneo encontró',
+        1: 'El tipo siguiente desconocido del encabezado encontró',
+        2: 'Opción desconocida del IPv6 encontrada'
+    },
+}
