@@ -1,4 +1,3 @@
-from ipaddress import IPv4Address
 from recursos import *
 
 class Sniffer:
@@ -55,12 +54,41 @@ class Sniffer:
             self.arp()
 
         elif self.protocolo == 'IPv6':
-        
-            print('Aqui se va a manejar IPv6')
-        
+            self.ipv6()
+
         else:
             
             print('No soportado aun')
+
+    def ipv6(self):
+        datos = self.raw_bytes[14:14+40]
+        datos_hex = self.bytes[14:14+40]
+        print(f"Datos: {' '.join(datos_hex)}")
+
+        self.clase_trafico = self.bits(datos[0] + datos[1], 4, 12, 16)
+        clase_trafico_bytes = bytes([int(self.clase_trafico, 2)])
+        self.prioridad = self.bits(clase_trafico_bytes, 0, 3)
+        self.caracteristicas = self.bits(clase_trafico_bytes, 3, 8)
+        self.etiqueta_flujo = self.bits_int(datos[1] + datos[2] + datos[3], 4, 24, 24)
+        #Tamaño: 4-5
+        #Siguiente: 6
+        #Alcance: 7
+        self.ip_origen = [i + j for i, j in zip(datos_hex[8:24:2], datos_hex[9:24:2])]
+
+        print(f"Clase de tráfico: {self.clase_trafico}")
+        print(f"Prioridad: {PRIORIDADES.get(self.prioridad, 'No encontrada')} ({self.prioridad})")
+        print(f"Caracteristicas de servicio: {self.caracteristicas}")
+        for index, c in enumerate(self.caracteristicas):
+            if index == 0:
+                print(f"\tRetardo: {'Normal' if c == '0' else 'Bajo'} ({c})")
+            elif index == 1:
+                print(f"\tRendimiento: {'Normal' if c == '0' else 'Alto'} ({c})")
+            elif index == 2:
+                print(f"\tFiabilidad: {'Normal' if c == '0' else 'Alta'} ({c})")
+
+        print(f"Etiqueta de flujo: {self.etiqueta_flujo}")
+        #
+        print(f"IP origen: {':'.join(self.ip_origen)}")
 
     def arp(self):
         datos = self.raw_bytes[14:]

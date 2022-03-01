@@ -1,7 +1,7 @@
 import os
 from sniffer import Sniffer
 
-practica = 'arp'
+practica = 'ipv6'
 
 def main():
     directory = 'tests'
