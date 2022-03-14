@@ -60,6 +60,22 @@ class Sniffer:
             
             print('No soportado aun')
 
+    def tcp(self, idx_inicio):
+        datos_hex = self.bytes[idx_inicio:]
+        datos = self.raw_bytes[idx_inicio:]
+        print(datos_hex)
+
+        self.tcp_puerto_origen = int.from_bytes(datos[0] + datos[1], byteorder='big')
+        # self.tcp_puerto_origen = int.from_bytes(self.bit_sum(datos, 0, 2), byteorder='big')
+        self.tcp_puerto_destino = int.from_bytes(datos[2] + datos[3], byteorder='big')
+        self.tcp_secuencia = int.from_bytes(self.bit_sum(datos, 4, 8), byteorder='big')
+        #ACK - 8 a 12
+        self.longitud = self.bits_int(datos[12], 0, 4)      #*4 bytes 
+        self.opciones = datos_hex[20 : 20 + self.longitud * 4 - 20]
+        offset_datos = len(self.opciones)
+
+        print(f"Longitud: {self.longitud*4}\n Opciones: {self.opciones}\n Longitud opciones: {len(self.opciones)}")
+
     def ipv6(self):
         datos = self.raw_bytes[14:14+40]
         datos_hex = self.bytes[14:14+40]
@@ -94,11 +110,12 @@ class Sniffer:
         print(f"Limite de saltos: {self.limite_saltos}")
         print(f"IP origen: {':'.join(self.ip_origen)}")
         print(f"IP destino: {':'.join(self.ip_destino)}")
-
+        
+        print(f"{'-'*30} {PROTOCOLOS.get(self.siguiente, 'Protocolo no definido')} ({self.siguiente}) {'-' *30}")
         if self.siguiente == 58:
             self.icmpv6()
-        else:
-            pass
+        elif self.siguiente == 6:
+            self.tcp(0)
 
     def icmpv6(self):
         datos = self.raw_bytes[54:58]
@@ -108,10 +125,7 @@ class Sniffer:
         self.icmpv6_codigo = int.from_bytes(datos[1], byteorder='big')
         self.icmpv6_checksum = datos_hex[2:4]
 
-        if self.icmpv6_tipo in ICMPV6_CODIGOS:
-            codigo = ICMPV6_CODIGOS[self.icmpv6_tipo].get(self.icmpv6_codigo, 'No especificado')
-        else:
-            codigo = 'No especificado'
+        codigo = ICMPV6_CODIGOS.get(self.icmpv6_tipo, {}).get(self.icmpv6_codigo, 'No especificado')
 
         print(f"Tipo: {ICMPV6_TIPOS.get(self.icmpv6_tipo, 'No especificado')} ({self.icmpv6_tipo})")
         print(f"Codigo: { codigo } ({self.icmpv6_codigo})")
@@ -165,7 +179,7 @@ class Sniffer:
         to_int = lambda x : str(int.from_bytes(x, byteorder='big'))
         self.ip_origen = list(map(to_int, datos[12:16]))
         self.ip_destino = list(map(to_int, datos[16:20]))
-        self.opciones = self.bytes[36:36 + self.longitud * 4 - 20]
+        self.opciones = self.bytes[34:34 + self.longitud * 4 - 20]
 
         print(f"Version: {self.version}")
         print(f"Longitud del encabezado: {self.longitud} palabras ({self.longitud * 4} bytes)")
@@ -194,20 +208,22 @@ class Sniffer:
         print(f"Tiempo de vida: {self.ttl}")
         
         print(f"Protocolo: {PROTOCOLOS.get(self.protocolo, 'No definido')} ({self.protocolo})")
-        if self.protocolo == 1:
-            self.icmpv4(34 + len(self.opciones))
-        else:
-            pass
 
         print(f"Checksum: {' '.join(self.checksum)}")
         print(f"IP origen: {'.'.join(self.ip_origen)}")
         print(f"IP destino: {'.'.join(self.ip_destino)}")
         print(f"Opciones: {' '.join(self.opciones)}")
 
+        print(f"{'-'*30} {PROTOCOLOS.get(self.protocolo, 'Protocolo no definido')} ({self.protocolo}) {'-' *30}")
+        if self.protocolo == 1:
+            self.icmpv4(34 + len(self.opciones))
+        elif self.protocolo == 6:
+            self.tcp(34 + self.longitud * 4 - 20)
+
 
     def icmpv4(self, idx_inicio):
-        self.icmpv4_tipo = self.bits_int(self.raw_bytes[idx_inicio], 0, 8)
-        self.icmpv4_codigo = self.bits_int(self.raw_bytes[idx_inicio + 1], 0, 8)
+        self.icmpv4_tipo = int.from_bytes(self.raw_bytes[idx_inicio], byteorder='big')
+        self.icmpv4_codigo = int.from_bytes(self.raw_bytes[idx_inicio + 1], byteorder='big')
         self.icmpv_checksum = self.bytes[idx_inicio + 2: idx_inicio + 4]
 
         print(f"\tTipo: {ICMPV4_TIPOS.get(self.icmpv4_tipo, 'No especificado')} ({self.icmpv4_tipo})")
@@ -222,3 +238,9 @@ class Sniffer:
 
     def is_valid(self):
         return self.bytes is not None
+
+    def bit_sum(self, bytes, inicio, fin):
+        total = bytes[inicio]
+        for i in range(inicio + 1, fin):
+            total += bytes[i]
+        return total

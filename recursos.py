@@ -165,3 +165,21 @@ ICMPV6_CODIGOS = {
         2: 'Opción desconocida del IPv6 encontrada'
     },
 }
+
+TCP_PUERTOS = {
+    20: 'FTP',
+    21: 'FTP',
+    22: 'SSH',
+    23: 'TELNET',
+    25: 'SMTP',
+    53: 'DNS',
+    67: 'DHCP',
+    68: 'DHCP',
+    69: 'TFTP',
+    80: 'HTTP',
+    110: 'POP3',
+    143: 'IMAP',
+    443: 'HTTPS',
+    993: 'IMAP SSL',
+    995: 'POP SSL',
+}
