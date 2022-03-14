@@ -73,8 +73,13 @@ class Sniffer:
         self.longitud = self.bits_int(datos[12], 0, 4)      #*4 bytes 
         self.opciones = datos_hex[20 : 20 + self.longitud * 4 - 20]
         offset_datos = len(self.opciones)
+        
+        self.tcp_flags = self.bits(datos[12] + datos[13], 4 + 3, 16, 16)
+        for i, flag in enumerate(self.tcp_flags):
+            print(f"{TCP_FLAGS[i]}: {'si' if flag == 1 else 'no'} ({flag})")
+        print(self.tcp_flags)
 
-        print(f"Longitud: {self.longitud*4}\n Opciones: {self.opciones}\n Longitud opciones: {len(self.opciones)}")
+        # print(f"Longitud: {self.longitud*4}\n Opciones: {self.opciones}\n Longitud opciones: {len(self.opciones)}")
 
     def ipv6(self):
         datos = self.raw_bytes[14:14+40]

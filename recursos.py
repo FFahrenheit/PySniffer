@@ -183,3 +183,5 @@ TCP_PUERTOS = {
     993: 'IMAP SSL',
     995: 'POP SSL',
 }
+
+TCP_FLAGS = ['NS', 'CWR', 'ECE', 'URG', 'ACK', 'PSH', 'RST', 'SYN', 'FIN']
