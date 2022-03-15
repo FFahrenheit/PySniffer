@@ -166,7 +166,7 @@ ICMPV6_CODIGOS = {
     },
 }
 
-TCP_PUERTOS = {
+TCP_UDP_PUERTOS = {
     20: 'FTP',
     21: 'FTP',
     22: 'SSH',
@@ -184,4 +184,4 @@ TCP_PUERTOS = {
     995: 'POP SSL',
 }
 
-TCP_FLAGS = ['NS', 'CWR', 'ECE', 'URG', 'ACK', 'PSH', 'RST', 'SYN', 'FIN']
+TCP_FLAGS = ['NS', 'CWR', 'ECE', 'URG', '\tACK', '\tPSH', '\tRST', '\tSYN', '\tFIN']

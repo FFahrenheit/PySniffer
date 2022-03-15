@@ -40,7 +40,7 @@ class Sniffer:
         print(f"Destino: {str(self.destino)}\n")
         print(f"Origen: {str(self.origen)}\n")
         print(f"Tipo: {''.join(self.tipo)} => {self.protocolo}\n")
-        print(f"Datos: {' '.join(self.datos)}\n")
+        # print(f"Datos: {' '.join(self.datos)}\n")
 
         print(f"{'*'*40} {self.protocolo} {'*'*40}")
 
@@ -57,7 +57,6 @@ class Sniffer:
             self.ipv6()
 
         else:
-            
             print('No soportado aun')
 
     def tcp(self, idx_inicio):
@@ -66,20 +65,55 @@ class Sniffer:
         print(datos_hex)
 
         self.tcp_puerto_origen = int.from_bytes(datos[0] + datos[1], byteorder='big')
-        # self.tcp_puerto_origen = int.from_bytes(self.bit_sum(datos, 0, 2), byteorder='big')
         self.tcp_puerto_destino = int.from_bytes(datos[2] + datos[3], byteorder='big')
         self.tcp_secuencia = int.from_bytes(self.bit_sum(datos, 4, 8), byteorder='big')
-        #ACK - 8 a 12
-        self.longitud = self.bits_int(datos[12], 0, 4)      #*4 bytes 
-        self.opciones = datos_hex[20 : 20 + self.longitud * 4 - 20]
+        self.tcp_ack = int.from_bytes(self.bit_sum(datos, 8, 12), byteorder='big')
+        self.tcp_longitud = self.bits_int(datos[12], 0, 4)      # *4 bytes
+        self.tcp_reservado = self.bits(datos[12], 4, 7)
+        self.tcp_flags = self.bits(datos[12] + datos[13], 7, 16, 16)
+        self.tcp_ventana = int.from_bytes(datos[14] + datos[15], byteorder='big')
+        self.tcp_checksum = ' '.join(datos_hex[16:18])
+        self.tcp_puntero_urg = int.from_bytes(datos[18] + datos[19], byteorder='big')
+        self.tcp_opciones = datos_hex[20 : self.tcp_longitud * 4 ]
         offset_datos = len(self.opciones)
-        
-        self.tcp_flags = self.bits(datos[12] + datos[13], 4 + 3, 16, 16)
-        for i, flag in enumerate(self.tcp_flags):
-            print(f"{TCP_FLAGS[i]}: {'si' if flag == 1 else 'no'} ({flag})")
-        print(self.tcp_flags)
+        self.tcp_datos = datos_hex[20 + offset_datos : ]
 
-        # print(f"Longitud: {self.longitud*4}\n Opciones: {self.opciones}\n Longitud opciones: {len(self.opciones)}")
+        origen = self.tcp_puerto_origen
+        print(f"Puerto origen: {TCP_UDP_PUERTOS.get(origen, 'Servicio desconocido')} ({self.port_type(origen)}) ({origen})")
+        destino = self.tcp_puerto_destino
+        print(f"Puerto destino: {TCP_UDP_PUERTOS.get(destino, 'Servicio desconocido')} ({self.port_type(destino)}) ({destino})")
+        print(f"Número de secuencia: {self.tcp_secuencia}")
+        print(f"Número de acuse de recibido: {self.tcp_ack}")
+        print(f"Longitud de cabecera: {self.tcp_longitud * 4} bytes")
+        print(f"Banderas reservadas: {self.tcp_reservado}")
+
+        print(f"Banderas: {self.tcp_flags}")
+        for i, flag in enumerate(self.tcp_flags):
+            print(f"{TCP_FLAGS[i]}: {'✔' if flag == '1' else '❌'} ({flag})")
+
+        print(f"Longitud de ventana: {self.tcp_ventana}")
+        print(f"Checksum: {self.tcp_checksum}")
+        print(f"Puntero urgente: {self.tcp_puntero_urg}")
+        print(f"Opciones: {' '.join(self.tcp_opciones)}")
+        print(f"Datos: {' '.join(self.tcp_datos)}")
+
+    def udp(self, idx_inicio):
+        datos_hex = self.bytes[idx_inicio:]
+        datos = self.raw_bytes[idx_inicio:]
+        print(datos_hex)
+
+        self.udp_puerto_origen = int.from_bytes(datos[0] + datos[1], byteorder='big')
+        self.udp_puerto_destino = int.from_bytes(datos[2] + datos[3], byteorder='big')
+        self.udp_longitud = int.from_bytes(datos[4] + datos[5], byteorder='big')
+        self.udp_checksum = " ".join(datos_hex[6:8])
+        self.udp_datos = " ".join(datos_hex[8:])
+        origen = self.udp_puerto_origen
+        destino = self.udp_puerto_destino
+        print(f"Puerto de origen: {TCP_UDP_PUERTOS.get(origen, 'Servicio desconocido')} ({self.port_type(origen)}) ({origen})")
+        print(f"Puerto de destino: {TCP_UDP_PUERTOS.get(destino, 'Servicio desconocido')} ({self.port_type(destino)}) ({destino})")
+        print(f"Longitud total: {self.udp_longitud}")
+        print(f"Checksum: {self.udp_checksum}")
+        print(f"Datos: {self.udp_datos}")
 
     def ipv6(self):
         datos = self.raw_bytes[14:14+40]
@@ -120,7 +154,9 @@ class Sniffer:
         if self.siguiente == 58:
             self.icmpv6()
         elif self.siguiente == 6:
-            self.tcp(0)
+            self.tcp(54)
+        elif self.siguiente == 17:
+            self.udp(54)
 
     def icmpv6(self):
         datos = self.raw_bytes[54:58]
@@ -224,6 +260,8 @@ class Sniffer:
             self.icmpv4(34 + len(self.opciones))
         elif self.protocolo == 6:
             self.tcp(34 + self.longitud * 4 - 20)
+        elif self.protocolo == 17:
+            self.udp(34 + self.longitud * 4 - 20)
 
 
     def icmpv4(self, idx_inicio):
@@ -249,3 +287,12 @@ class Sniffer:
         for i in range(inicio + 1, fin):
             total += bytes[i]
         return total
+
+    def port_type(self, port : int):
+        if port >= 0 and port <= 1023:
+            return 'Bien conocido'
+        if port >= 1024 and port <= 49151:
+            return 'Registrado'
+        if port >= 49152 and port <= 65535:
+            return 'Dinámico'
+        return 'Inválido'
