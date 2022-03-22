@@ -9,7 +9,7 @@ def main():
         if practica in filename:
             f = os.path.join(directory, filename)
             if os.path.isfile(f):
-                Sniffer(f).handle()
+                Sniffer(filename=f).handle()
 
 if __name__ == '__main__':
     main()

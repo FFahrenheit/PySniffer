@@ -1,7 +1,34 @@
 from recursos import *
-
+from datetime import datetime
 class Sniffer:
-    def __init__(self, filename):
+    def __init__(self, filename = None, packet = None):
+        if filename is not None:
+            self.from_file(filename)
+        if packet is not None:
+            self.from_packet(packet)
+    
+    def from_packet(self, packet):
+        print(f"{'*'*10} ETHERNET ({ str(datetime.now()) }) {'*'*10}")
+        self.packet = packet
+
+        self.bytes = []
+        self.raw_bytes = []
+        try:
+            for data in packet:
+                byte = data.to_bytes(1, byteorder='big')
+                hex_digit = byte.hex().upper()  #Representación del string    
+                self.bytes.append(hex_digit)                
+                self.raw_bytes.append(byte)
+
+            print('Contenido: ' + ' '.join(self.bytes), end='\n')
+            print(f"Longitud: {str(len(self.bytes))} bytes", end = '\n\n')
+        except Exception as e:
+            print(e)
+            self.bytes = None
+            print('Error al leer el paquete')
+            return
+
+    def from_file(self, filename):
         print(f"{'*'*20} ETHERNET ({ filename }) {'*'*20}")
         self.filename = filename
 
@@ -26,7 +53,7 @@ class Sniffer:
             self.bytes = None
             print('Error al leer el archivo')
             return
-
+    
     def handle(self):
         if not self.is_valid():
             return
@@ -37,9 +64,9 @@ class Sniffer:
         self.datos =  self.bytes[14:]
         self.protocolo = TIPOS.get(self.tipo, 'Por definir')
 
-        print(f"Destino: {str(self.destino)}\n")
-        print(f"Origen: {str(self.origen)}\n")
-        print(f"Tipo: {''.join(self.tipo)} => {self.protocolo}\n")
+        print(f"Destino: {str(self.destino)}")
+        print(f"Origen: {str(self.origen)}")
+        print(f"Tipo: {''.join(self.tipo)} => {self.protocolo}")
         # print(f"Datos: {' '.join(self.datos)}\n")
 
         print(f"{'*'*40} {self.protocolo} {'*'*40}")
@@ -62,7 +89,6 @@ class Sniffer:
     def tcp(self, idx_inicio):
         datos_hex = self.bytes[idx_inicio:]
         datos = self.raw_bytes[idx_inicio:]
-        print(datos_hex)
 
         self.tcp_puerto_origen = int.from_bytes(datos[0] + datos[1], byteorder='big')
         self.tcp_puerto_destino = int.from_bytes(datos[2] + datos[3], byteorder='big')
@@ -89,7 +115,7 @@ class Sniffer:
 
         print(f"Banderas: {self.tcp_flags}")
         for i, flag in enumerate(self.tcp_flags):
-            print(f"{TCP_FLAGS[i]}: {'✔' if flag == '1' else '❌'} ({flag})")
+            print(f"{TCP_FLAGS[i]}: {'Habilitado ✔' if flag == '1' else 'Deshabilitado ❌'} ({flag})")      #✔ y ❌
 
         print(f"Longitud de ventana: {self.tcp_ventana}")
         print(f"Checksum: {self.tcp_checksum}")
@@ -100,7 +126,6 @@ class Sniffer:
     def udp(self, idx_inicio):
         datos_hex = self.bytes[idx_inicio:]
         datos = self.raw_bytes[idx_inicio:]
-        print(datos_hex)
 
         self.udp_puerto_origen = int.from_bytes(datos[0] + datos[1], byteorder='big')
         self.udp_puerto_destino = int.from_bytes(datos[2] + datos[3], byteorder='big')
@@ -296,3 +321,6 @@ class Sniffer:
         if port >= 49152 and port <= 65535:
             return 'Dinámico'
         return 'Inválido'
+
+    def bits_str(self, bytes):
+        return ''.join(map(lambda x : chr(int.from_bytes(x, byteorder='big')), bytes))
