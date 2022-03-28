@@ -8,7 +8,7 @@ class Sniffer:
             self.from_packet(packet)
     
     def from_packet(self, packet):
-        print(f"{'*'*10} ETHERNET ({ str(datetime.now()) }) {'*'*10}")
+        print(f"{'='*10} ETHERNET ({ str(datetime.now()) }) {'='*10}")
         self.packet = packet
 
         self.bytes = []
@@ -29,7 +29,7 @@ class Sniffer:
             return
 
     def from_file(self, filename):
-        print(f"{'*'*20} ETHERNET ({ filename }) {'*'*20}")
+        print(f"{'='*20} ETHERNET ({ filename }) {'='*20}")
         self.filename = filename
 
         try:
@@ -101,7 +101,7 @@ class Sniffer:
         self.tcp_checksum = ' '.join(datos_hex[16:18])
         self.tcp_puntero_urg = int.from_bytes(datos[18] + datos[19], byteorder='big')
         self.tcp_opciones = datos_hex[20 : self.tcp_longitud * 4 ]
-        offset_datos = len(self.opciones)
+        offset_datos = len(self.tcp_opciones)
         self.tcp_datos = datos_hex[20 + offset_datos : ]
 
         origen = self.tcp_puerto_origen
@@ -134,9 +134,10 @@ class Sniffer:
         self.udp_datos = " ".join(datos_hex[8:])
         origen = self.udp_puerto_origen
         destino = self.udp_puerto_destino
+
         print(f"Puerto de origen: {TCP_UDP_PUERTOS.get(origen, 'Servicio desconocido')} ({self.port_type(origen)}) ({origen})")
         print(f"Puerto de destino: {TCP_UDP_PUERTOS.get(destino, 'Servicio desconocido')} ({self.port_type(destino)}) ({destino})")
-        print(f"Longitud total: {self.udp_longitud}")
+        print(f"Longitud total: {self.udp_longitud} bytes")
         print(f"Checksum: {self.udp_checksum}")
         print(f"Datos: {self.udp_datos}")
 
@@ -228,7 +229,7 @@ class Sniffer:
     def ipv4(self):
         datos = self.raw_bytes[14:14+20]
         datos_hex = self.bytes[14:14+20]
-        print(f"Datos: {' '.join(self.bytes[14:14+20])}")
+        # print(f"Datos: {' '.join(self.bytes[14:14+20])}")
 
         self.version = self.bits_int(datos[0], 0, 4)
         self.longitud = self.bits_int(datos[0], 4, 8)
