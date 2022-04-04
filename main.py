@@ -1,7 +1,7 @@
 import os
 from sniffer import Sniffer
 
-practica = 'udp'
+practica = 'dns'
 
 def main():
     directory = 'tests'

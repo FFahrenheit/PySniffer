@@ -123,6 +123,9 @@ class Sniffer:
         print(f"Opciones: {' '.join(self.tcp_opciones)}")
         print(f"Datos: {' '.join(self.tcp_datos)}")
 
+        idx_data = idx_inicio + self.tcp_longitud * 4
+        self.check_port(idx_data, self.tcp_puerto_destino)
+
     def udp(self, idx_inicio):
         datos_hex = self.bytes[idx_inicio:]
         datos = self.raw_bytes[idx_inicio:]
@@ -140,6 +143,22 @@ class Sniffer:
         print(f"Longitud total: {self.udp_longitud} bytes")
         print(f"Checksum: {self.udp_checksum}")
         print(f"Datos: {self.udp_datos}")
+
+        self.check_port(idx_inicio + 8, self.udp_puerto_destino)
+
+    def check_port(self, idx_inicio, port):
+        if port == 53:
+            self.dns(idx_inicio)
+
+    def dns(self, idx_inicio):
+        datos_hex = self.bytes[idx_inicio:]
+        datos = self.raw_bytes[idx_inicio:]
+
+        print(self.bits_str(datos))
+        print(datos_hex[::])
+        self.dns_qdcount = int.from_bytes(datos[4] + datos[5], byteorder='big')
+        print(self.dns_qdcount)
+        print(datos[5], datos[6])
 
     def ipv6(self):
         datos = self.raw_bytes[14:14+40]
