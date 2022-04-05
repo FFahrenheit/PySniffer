@@ -6,8 +6,8 @@ from sniffer import Sniffer
 from datetime import datetime
 import sys
 
-interface = "*Wireless*"    
-#interface = "*Ethernet"
+interface = "*Wireless*"
+interface = "*Realtek*"
 
 with WinPcapDevices() as devices:
     for device in devices:
@@ -24,6 +24,6 @@ filename = "logs/log-" + str(datetime.now()).replace(':','-') + ".txt"
 
 sys.stdout = open(filename, 'w', encoding='utf-8')
 
-WinPcapUtils.capture_on("*Wireless*", packet_callback)
+WinPcapUtils.capture_on(interface, packet_callback)
 
 sys.stdout.close()

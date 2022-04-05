@@ -1,5 +1,6 @@
 from recursos import *
 from datetime import datetime
+
 class Sniffer:
     def __init__(self, filename = None, packet = None):
         if filename is not None:
@@ -124,7 +125,7 @@ class Sniffer:
         print(f"Datos: {' '.join(self.tcp_datos)}")
 
         idx_data = idx_inicio + self.tcp_longitud * 4
-        self.check_port(idx_data, self.tcp_puerto_destino)
+        self.check_port(idx_data, [self.tcp_puerto_destino, self.tcp_puerto_origen])
 
     def udp(self, idx_inicio):
         datos_hex = self.bytes[idx_inicio:]
@@ -144,21 +145,60 @@ class Sniffer:
         print(f"Checksum: {self.udp_checksum}")
         print(f"Datos: {self.udp_datos}")
 
-        self.check_port(idx_inicio + 8, self.udp_puerto_destino)
+        self.check_port(idx_inicio + 8, [self.udp_puerto_destino, self.udp_puerto_origen])
 
-    def check_port(self, idx_inicio, port):
-        if port == 53:
+    def check_port(self, idx_inicio, ports):
+        if 53 in ports:
             self.dns(idx_inicio)
 
     def dns(self, idx_inicio):
-        datos_hex = self.bytes[idx_inicio:]
-        datos = self.raw_bytes[idx_inicio:]
+        print(f"{'/'*30} DNS {'/'*30}")
+        datos_hex = self.bytes[idx_inicio:]     #Hex - string 0A, 0B
+        datos = self.raw_bytes[idx_inicio:]     #Raw - 0x01, 0x0A binarios 
+
+        print(' '.join(datos_hex))
+        self.dns_id = ' '.join(datos_hex[0:2])
+        self.dns_flags = self.bits(datos[2] + datos[3], 0, 16, 16)
+        self.dns_qr = self.dns_flags[0]
+        self.dns_op_code = self.bits_int(datos[2], 1, 5)
+        self.dns_rcode = self.bits_int(datos[3], 4, 8)
+        self.dns_qdcount = int.from_bytes(datos[4] + datos[5], byteorder='big')
+        self.dns_ancount = int.from_bytes(datos[6] + datos[7], byteorder='big')
+        self.dns_nscount = int.from_bytes(datos[8] + datos[9], byteorder='big')
+        self.dns_arcount = int.from_bytes(datos[10] + datos[11], byteorder='big')
+
+        print(f"ID: {self.dns_id}")
+        print(f"Banderas: {self.dns_flags}")
+        print(f"QR: {'Respuesta' if self.dns_qr == '1' else 'Consulta'} ({self.dns_qr})")
+        print(f"OP Code: {DNS_OP_CODES.get(self.dns_op_code, 'Reservado')} ({self.dns_op_code})")
+        for index, flag in enumerate(self.dns_flags[5:9]):
+            print(f"{DNS_BIT_FLAGS[index]}: {'Activa' if flag == '1' else 'Inactiva'} ({flag})")
+        print(f"Z: {self.dns_flags[9:12]}")
+        print(f"RCode: {DNS_RCODES.get(self.dns_rcode, 'No definido')} ({self.dns_rcode})")
+
+        print(f"QDcount: {self.dns_qdcount}")
+        print(f"ANcount: {self.dns_ancount}")
+        print(f"NScount: {self.dns_nscount}")
+        print(f"ARcount: {self.dns_arcount}")
+
+        for _ in range(self.dns_qdcount):
+            i = 12
+            longitud = int.from_bytes(datos[i], byteorder='big') 
+            dominio = ''
+            while longitud != 0:
+                print(longitud)
+                print(datos[i+1:i+longitud+1])
+                dominio += self.bits_str(datos[i +1 : i + longitud + 1])
+                i += longitud
+                print(i)
+                longitud = int.from_bytes(datos[i + 1], byteorder='big')
+                if longitud != 0:
+                    dominio += '.'
+            
+            print(dominio)
 
         print(self.bits_str(datos))
-        print(datos_hex[::])
-        self.dns_qdcount = int.from_bytes(datos[4] + datos[5], byteorder='big')
-        print(self.dns_qdcount)
-        print(datos[5], datos[6])
+
 
     def ipv6(self):
         datos = self.raw_bytes[14:14+40]

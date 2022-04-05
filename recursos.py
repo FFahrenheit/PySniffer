@@ -185,3 +185,39 @@ TCP_UDP_PUERTOS = {
 }
 
 TCP_FLAGS = ['NS', 'CWR', 'ECE', 'URG', '\tACK', '\tPSH', '\tRST', '\tSYN', '\tFIN']
+
+DNS_OP_CODES = {
+    0: 'Cosulta estandar QUERY',
+    1: 'Consulta inversa IQUERY',
+    2: 'Solicitud de estado STATUS'
+}
+
+DNS_BIT_FLAGS = [
+    'AA: Respuesta autoritativa', 
+    'TC: Truncado', 
+    'RD: Recursividad', 
+    'RA: Recursividad disponible'
+]
+
+DNS_RCODES = {
+    0: 'Ningún error.',
+    1: 'Error de formato. El servidor fue incapaz de interpretar el mensaje.',
+    2: 'Fallo en el servidor. El mensaje no fue procesado debido a un problema con el servidor.',
+    3: 'Error en nombre. El nombre de dominio de la consulta no existe. Sólo válido si el bit AA está activo en la respuesta.',
+    4: 'No implementado. El tipo solicitado de consulta no está implementado en el servidor de nombres.',
+    5: 'Rechazado. El servidor rechaza responder por razones políticas. Los demás valores se reservan para su usuario en el futuro.'
+}
+
+DNS_TIPOS = {
+    1: 'A',
+    5: 'CNAME',
+    13: 'HINFO',
+    15: 'MX',
+    22: 'NS',
+    23: 'NS'
+}
+
+DNS_CLASES = {
+    1: 'IN: Internet',
+    3: 'CH: Caótico'
+}
