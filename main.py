@@ -1,7 +1,7 @@
 import os
 from sniffer import Sniffer
 
-practica = 'dns'
+practica = 'dns_1'
 
 def main():
     directory = 'tests'
@@ -9,7 +9,10 @@ def main():
         if practica in filename:
             f = os.path.join(directory, filename)
             if os.path.isfile(f):
-                Sniffer(filename=f).handle()
+                try:
+                    Sniffer(filename=f).handle()
+                except Exception as e:
+                    print(e)
 
 if __name__ == '__main__':
     main()

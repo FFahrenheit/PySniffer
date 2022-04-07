@@ -1,3 +1,4 @@
+from xml import dom
 from recursos import *
 from datetime import datetime
 
@@ -180,25 +181,85 @@ class Sniffer:
         print(f"ANcount: {self.dns_ancount}")
         print(f"NScount: {self.dns_nscount}")
         print(f"ARcount: {self.dns_arcount}")
-
-        for _ in range(self.dns_qdcount):
-            i = 12
+        
+        i = 12
+        for j in range(self.dns_qdcount):    
             longitud = int.from_bytes(datos[i], byteorder='big') 
             dominio = ''
             while longitud != 0:
-                print(longitud)
-                print(datos[i+1:i+longitud+1])
-                dominio += self.bits_str(datos[i +1 : i + longitud + 1])
+                i += 1
+                dominio += self.bits_str(datos[i : i+longitud])
                 i += longitud
-                print(i)
-                longitud = int.from_bytes(datos[i + 1], byteorder='big')
+                # print(i)
+                longitud = int.from_bytes(datos[i], byteorder='big')
                 if longitud != 0:
                     dominio += '.'
-            
-            print(dominio)
+            else:
+                i += 1
+            tipo = int.from_bytes(datos[i] + datos[i+1], byteorder='big')
+            i += 2
+            clase = int.from_bytes(datos[i] + datos[i+1], byteorder='big')
+            i += 2
+            print(f"Pregunta #{ j + 1 }")
+            print(f"\tDominio: {dominio}")
+            print(f"\tTipo: {DNS_TIPOS.get(tipo, 'Tipo desconocido')} ({tipo})")
+            print(f"\tClase: {DNS_CLASES.get(clase, 'Clase desconocida')} ({clase})")
 
-        print(self.bits_str(datos))
+        print(i)
+        for j in range(self.dns_ancount):
+            puntero = ' '.join(datos_hex[i:i+2])
+            i += 2
+            tipo = int.from_bytes(datos[i] + datos[i+1], byteorder='big')
+            i += 2
+            clase = int.from_bytes(datos[i] + datos[i+1], byteorder='big')
+            i += 2
+            ttl = int.from_bytes(self.bit_sum(datos, i, i+4), byteorder='big')
+            i += 4
+            longitud = int.from_bytes(datos[i] + datos[i+1], byteorder='big')
+            i += 2
+            print(f"Respuesta #{ j + 1 }")
+            print(f"\tPuntero: {puntero}")
+            print(f"\tTipo: {DNS_TIPOS.get(tipo, 'Tipo desconocido')} ({tipo})")
+            print(f"\tClase: {DNS_CLASES.get(clase, 'Clase desconocida')} ({clase})")
+            print(f"\tTTL: {ttl} segundos")
+            print(f"\tLongitud de datos: {longitud} bytes")            
 
+            data = self.handle_dns_answer(datos, DNS_TIPOS.get(tipo, None), longitud, i)
+            i += longitud
+            print(f"\tDatos: {data}")
+
+    def handle_dns_answer(self, datos, tipo, longitud_datos, idx_inicio):
+        data = datos[idx_inicio:idx_inicio + longitud_datos]
+        # print(data)
+        # print(len(data))
+        if tipo is None:
+            return ''
+        if tipo == 'A':
+            to_int = lambda x : str(int.from_bytes(x, byteorder='big'))
+            ip = list(map(to_int, data[0:4]))
+            # print(ip)
+            return 'IP servidor: ' + '.'.join(ip)
+        elif tipo == 'CNAME':
+            i = 0
+            longitud = int.from_bytes(data[i], byteorder='big')
+            dominio = ''
+            while longitud != 0 and i <= longitud_datos:
+                i += 1
+                dominio += self.bits_str(data[i : i+longitud])
+                # print(dominio)
+                i += longitud + 1
+                longitud = int.from_bytes(data[i], byteorder='big')
+                # print(longitud)
+                if longitud != 0:
+                    dominio += '.'
+                if longitud > longitud_datos:
+                    return 'Dominio: ' + dominio + self.bits_str(data[i:])
+            else: 
+                return 'Dominio: ' + dominio
+        elif tipo == 'MX':
+            pass
+        elif tipo == 'NS':
+            pass
 
     def ipv6(self):
         datos = self.raw_bytes[14:14+40]
