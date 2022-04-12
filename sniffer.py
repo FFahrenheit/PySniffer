@@ -1,3 +1,4 @@
+from turtle import pu
 from xml import dom
 from recursos import *
 from datetime import datetime
@@ -207,7 +208,22 @@ class Sniffer:
 
         print(i)
         for j in range(self.dns_ancount):
-            puntero = ' '.join(datos_hex[i:i+2])
+            puntero = int.from_bytes(datos[i] + datos[i+1],byteorder='big')
+            puntero = puntero-idx_inicio
+            print(puntero)
+            for j in range(self.dns_qdcount):    
+                longitud = int.from_bytes(datos[puntero], byteorder='big') 
+                dominio = ''
+                while longitud != 0:
+                    puntero += 1
+                    dominio += self.bits_str(datos[puntero : puntero+longitud])
+                    puntero += longitud
+                    print(puntero)
+                    longitud = int.from_bytes(datos[puntero], byteorder='big')
+                    if longitud != 0:
+                        dominio += '.'  
+                else:
+                    puntero += 1      
             i += 2
             tipo = int.from_bytes(datos[i] + datos[i+1], byteorder='big')
             i += 2
@@ -218,7 +234,7 @@ class Sniffer:
             longitud = int.from_bytes(datos[i] + datos[i+1], byteorder='big')
             i += 2
             print(f"Respuesta #{ j + 1 }")
-            print(f"\tPuntero: {puntero}")
+            print(f"\tNombre del dominio: {dominio}")
             print(f"\tTipo: {DNS_TIPOS.get(tipo, 'Tipo desconocido')} ({tipo})")
             print(f"\tClase: {DNS_CLASES.get(clase, 'Clase desconocida')} ({clase})")
             print(f"\tTTL: {ttl} segundos")
