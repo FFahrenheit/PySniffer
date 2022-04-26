@@ -181,60 +181,53 @@ class Sniffer:
         print(f"NScount: {self.dns_nscount}")
         print(f"ARcount: {self.dns_arcount}")
         
-        i = 12
-        print('Questions:')
-        for j in range(self.dns_qdcount):    
-            dominio, i = self.get_domain(datos, i)
+        try:
+            i = 12
+            print('Questions:')
+            for j in range(self.dns_qdcount):    
+                dominio, i = self.get_domain(datos, i)
 
-            tipo = int.from_bytes(datos[i] + datos[i+1], byteorder='big')
-            i += 2
-            clase = int.from_bytes(datos[i] + datos[i+1], byteorder='big')
-            i += 2
-            print(f"\tPregunta #{ j + 1 }")
-            print(f"\t\tDominio: {dominio}")
-            print(f"\t\tTipo: {DNS_TIPOS.get(tipo, 'Tipo desconocido')} ({tipo})")
-            print(f"\t\tClase: {DNS_CLASES.get(clase, 'Clase desconocida')} ({clase})")
+                tipo = int.from_bytes(datos[i] + datos[i+1], byteorder='big')
+                i += 2
+                clase = int.from_bytes(datos[i] + datos[i+1], byteorder='big')
+                i += 2
+                print(f"\tPregunta #{ j + 1 }")
+                print(f"\t\tDominio: {dominio}")
+                print(f"\t\tTipo: {DNS_TIPOS.get(tipo, 'Tipo desconocido')} ({tipo})")
+                print(f"\t\tClase: {DNS_CLASES.get(clase, 'Clase desconocida')} ({clase})")
 
-        print('Answers: ')
-        for j in range(self.dns_ancount):
-            print(f"\tRespuesta #{ j + 1 }")
+            print('Answers: ')
+            for j in range(self.dns_ancount):
+                print(f"\tRespuesta #{ j + 1 }")
 
-            puntero_hex = ' '.join(datos_hex[i:i+2])
-            puntero = int.from_bytes(datos[i] + datos[i+1], byteorder='big')
-            puntero = puntero - idx_inicio - 1 #-1 para saber cuánto leer...
-            dominio, puntero = self.get_domain(datos, puntero)
-            # for j in range(self.dns_qdcount):    
-            #     longitud = int.from_bytes(datos[puntero], byteorder='big') 
-            #     dominio = ''
-            #     while longitud != 0:
-            #         puntero += 1
-            #         dominio += self.bits_str(datos[puntero : puntero+longitud])
-            #         puntero += longitud
-            #         print(puntero)
-            #         longitud = int.from_bytes(datos[puntero], byteorder='big')
-            #         if longitud != 0:
-            #             dominio += '.'  
-            #     else:
-            #         puntero += 1
-            i += 2
-            tipo = int.from_bytes(datos[i] + datos[i+1], byteorder='big')
-            i += 2
-            clase = int.from_bytes(datos[i] + datos[i+1], byteorder='big')
-            i += 2
-            ttl = int.from_bytes(self.bit_sum(datos, i, i+4), byteorder='big')
-            i += 4
-            longitud = int.from_bytes(datos[i] + datos[i+1], byteorder='big')
-            i += 2
-            print(f"\t\tPuntero: {puntero_hex}")
-            print(f"\t\tNombre del dominio: {dominio}")
-            print(f"\t\tTipo: {DNS_TIPOS.get(tipo, 'Tipo desconocido')} ({tipo})")
-            print(f"\t\tClase: {DNS_CLASES.get(clase, 'Clase desconocida')} ({clase})")
-            print(f"\t\tTTL: {ttl} segundos")
-            print(f"\t\tLongitud de datos: {longitud} bytes")            
+                puntero_hex = ' '.join(datos_hex[i:i+2])
+                puntero_int = int.from_bytes(datos[i] + datos[i+1], byteorder='big')
+                puntero = puntero_int - idx_inicio - 1 #-1 para saber cuánto leer...
+                dominio, puntero = self.get_domain(datos, puntero)
 
-            data = self.handle_dns_answer(datos, DNS_TIPOS.get(tipo, None), longitud, i)
-            i += longitud
-            print(f"\t\tDatos: {data}")
+                i += 2
+                tipo = int.from_bytes(datos[i] + datos[i+1], byteorder='big')
+                i += 2
+                clase = int.from_bytes(datos[i] + datos[i+1], byteorder='big')
+                i += 2
+                ttl = int.from_bytes(self.bit_sum(datos, i, i+4), byteorder='big')
+                i += 4
+                longitud = int.from_bytes(datos[i] + datos[i+1], byteorder='big')
+                i += 2
+                print(f"\t\tPuntero: {puntero_hex} ({puntero_int})")
+                print(f"\t\tNombre del dominio: {dominio}")
+                print(f"\t\tTipo: {DNS_TIPOS.get(tipo, 'Tipo desconocido')} ({tipo})")
+                print(f"\t\tClase: {DNS_CLASES.get(clase, 'Clase desconocida')} ({clase})")
+                print(f"\t\tTTL: {ttl} segundos")
+                print(f"\t\tLongitud de datos: {longitud} bytes")            
+
+                data = self.handle_dns_answer(datos, DNS_TIPOS.get(tipo, None), longitud, i)
+                i += longitud
+                print(f"\t\tDatos: {data}")
+        except:
+            print('Accessing Ethernet RAM')
+            pass
+        
 
     def handle_dns_answer(self, datos, tipo, longitud_datos, idx_inicio):
         data = datos[idx_inicio:idx_inicio + longitud_datos]
@@ -245,10 +238,9 @@ class Sniffer:
         if tipo == 'A':
             to_int = lambda x : str(int.from_bytes(x, byteorder='big'))
             ip = list(map(to_int, data[0:4]))
-            # print(ip)
             return 'IP servidor: ' + '.'.join(ip)
 
-        elif tipo == 'CNAME':
+        elif tipo == 'CNAME' or tipo == 'PTR':
             dominio, _ = self.get_domain(data, 0)
             return 'Dominio: ' + dominio
         
