@@ -1,9 +1,14 @@
 import os
 from sniffer import Sniffer
+from snif import start_sniffer
 
-practica = 'dns_1'
+practica = 'sniffer'
 
 def main():
+    if practica == 'sniffer':
+        start_sniffer()
+        return
+
     directory = 'tests'
     for filename in os.listdir(directory):
         if practica in filename:

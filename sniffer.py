@@ -183,8 +183,10 @@ class Sniffer:
         
         try:
             i = 12
-            print('Questions:')
             for j in range(self.dns_qdcount):    
+                if j == 0:
+                    print('Questions:')
+
                 dominio, i = self.get_domain(datos, i)
 
                 tipo = int.from_bytes(datos[i] + datos[i+1], byteorder='big')
@@ -196,8 +198,10 @@ class Sniffer:
                 print(f"\t\tTipo: {DNS_TIPOS.get(tipo, 'Tipo desconocido')} ({tipo})")
                 print(f"\t\tClase: {DNS_CLASES.get(clase, 'Clase desconocida')} ({clase})")
 
-            print('Answers: ')
             for j in range(self.dns_ancount):
+                if j == 0:
+                    print('Answers: ')
+
                 print(f"\tRespuesta #{ j + 1 }")
 
                 puntero_hex = ' '.join(datos_hex[i:i+2])
@@ -248,6 +252,9 @@ class Sniffer:
             pass
         elif tipo == 'NS':
             pass
+        
+        return 'Not implemented'
+
 
     def get_domain(self, data, begin=0, end=None):
         if end is None:
