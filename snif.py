@@ -6,11 +6,6 @@ from sniffer import Sniffer
 from datetime import datetime
 import sys
 
-interface = "*Wireless*"
-# interface = "*Realtek*"
-console = True
-
-
 def packet_callback(win_pcap, param, header, pkt_data):
     try:
         Sniffer(packet=pkt_data).handle()
@@ -23,8 +18,12 @@ def start_sniffer():
     with WinPcapDevices() as devices:
         for device in devices:
             print(f"{device.name} {device.description} {device.flags}")
+        
+        interface = input('Escriba la interfaz seleccionada (Parte del nombre identificable): ')
+        interface = '*' + interface + '*'
+        console = input('Desea guardar los paquetes en un archivo de texto? (y/n): ')
     
-    if console:
+    if console == 'n' or console == 'N':
         WinPcapUtils.capture_on(interface, packet_callback)
     else:
         filename = "logs/log-" + str(datetime.now()).replace(':','-') + ".txt"

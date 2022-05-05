@@ -12,14 +12,9 @@ class Sniffer:
         print(f"{'='*10} ETHERNET ({ str(datetime.now()) }) {'='*10}")
         self.packet = packet
 
-        self.bytes = []
-        self.raw_bytes = []
         try:
-            for data in packet:
-                byte = data.to_bytes(1, byteorder='big')
-                hex_digit = byte.hex().upper()  #Representación del string    
-                self.bytes.append(hex_digit)                
-                self.raw_bytes.append(byte)
+            self.raw_bytes = [ data.to_bytes(1, byteorder='big') for data in packet ]
+            self.bytes = [ byte.hex().upper() for byte in self.raw_bytes ]
 
             print('Contenido: ' + ' '.join(self.bytes), end='\n')
             print(f"Longitud: {str(len(self.bytes))} bytes", end = '\n\n')
