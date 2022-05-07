@@ -8,8 +8,16 @@ class Sniffer:
         if packet is not None:
             self.from_packet(packet)
     
+    def text_separator(self, message, separator, length = 80):
+        n = length - len(message) + 2
+        if n % 2 == 0:
+            print(f"{separator*int(n/2)} {message} {separator*int(n/2)}")
+        else:
+            print(f"{separator*int(n//2 + 1)} {message} {separator*int(n//2)}")
+
+
     def from_packet(self, packet):
-        print(f"{'='*10} ETHERNET ({ str(datetime.now()) }) {'='*10}")
+        self.text_separator(f"ETHERNET ({ str(datetime.now()) })", '=')
         self.packet = packet
 
         try:
@@ -25,7 +33,7 @@ class Sniffer:
             return
 
     def from_file(self, filename):
-        print(f"{'='*20} ETHERNET ({ filename }) {'='*20}")
+        self.text_separator(f"ETHERNET ({filename})", '=')
         self.filename = filename
 
         try:
@@ -64,8 +72,8 @@ class Sniffer:
         print(f"Origen: {str(self.origen)}")
         print(f"Tipo: {''.join(self.tipo)} => {self.protocolo}")
         # print(f"Datos: {' '.join(self.datos)}\n")
-
-        print(f"{'*'*40} {self.protocolo} {'*'*40}")
+        
+        self.text_separator(self.protocolo, '*')
 
         if self.protocolo == 'IPv4':        
             self.ipv4()
@@ -147,7 +155,7 @@ class Sniffer:
             self.dns(idx_inicio)
 
     def dns(self, idx_inicio):
-        print(f"{'_'*40} DNS {'_'*40}")
+        self.text_separator("DNS", '_')
         datos_hex = self.bytes[idx_inicio:]     #Hex - string 0A, 0B
         datos = self.raw_bytes[idx_inicio:]     #Raw - 0x01, 0x0A binarios 
 
@@ -309,7 +317,8 @@ class Sniffer:
         print(f"IP origen: {':'.join(self.ip_origen)}")
         print(f"IP destino: {':'.join(self.ip_destino)}")
         
-        print(f"{'-'*30} {PROTOCOLOS.get(self.siguiente, 'Protocolo no definido')} ({self.siguiente}) {'-' *30}")
+        self.text_separator(f"{PROTOCOLOS.get(self.siguiente, 'Protocolo no definido')} ({self.siguiente})", '-')
+
         if self.siguiente == 58:
             self.icmpv6()
         elif self.siguiente == 6:
@@ -414,7 +423,8 @@ class Sniffer:
         print(f"IP destino: {'.'.join(self.ip_destino)}")
         print(f"Opciones: {' '.join(self.opciones)}")
 
-        print(f"{'-'*30} {PROTOCOLOS.get(self.protocolo, 'Protocolo no definido')} ({self.protocolo}) {'-' *30}")
+        self.text_separator(f"{PROTOCOLOS.get(self.protocolo, 'Protocolo no definido')} ({self.protocolo})", '-')
+
         if self.protocolo == 1:
             self.icmpv4(34 + len(self.opciones))
         elif self.protocolo == 6:
